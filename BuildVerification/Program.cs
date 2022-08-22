@@ -16,7 +16,8 @@ namespace BuildVerification
             {
 				Console.WriteLine("Please select an option:\n" +
 					"1. Calculate average temperature in Sweden\n" + 
-					"2. Calculate total rainfall in Lund\n" + 
+					"2. Calculate total rainfall in Lund\n" +
+					"3. Post the temperature at all stations\n" +
 					"4. Quit");
 				
 				switch(Console.ReadLine())
@@ -44,6 +45,10 @@ namespace BuildVerification
 							Console.WriteLine(e);
 							continue;
                         }
+						break;
+					case "3":
+						Temperature temperature2 = new Temperature();
+						temperature2.Run();
 						break;
 					case "4":
 						running = false;
