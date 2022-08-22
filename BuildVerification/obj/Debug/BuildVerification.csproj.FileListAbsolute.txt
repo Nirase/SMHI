@@ -1,4 +1,3 @@
-C:\Users\Me\Desktop\SMHI\BuildVerification\obj\Debug\BuildVerification.csprojAssemblyReference.cache
 C:\Users\Me\Desktop\SMHI\BuildVerification\obj\Debug\BuildVerification.csproj.CoreCompileInputs.cache
 C:\Users\Me\Desktop\SMHI\BuildVerification\bin\Debug\BuildVerification.exe.config
 C:\Users\Me\Desktop\SMHI\BuildVerification\bin\Debug\BuildVerification.exe
