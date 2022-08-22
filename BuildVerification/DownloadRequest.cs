@@ -10,13 +10,11 @@ namespace BuildVerification
     class DownloadRequest
     {
 
-        List<Station> stationSet;
         public XmlDocument Document { get; private set; }
 
         public DownloadRequest() 
         {
             Document = new XmlDocument();
-            stationSet = new List<Station>();
         }
         public DownloadRequest(XmlDocument document)
         {
