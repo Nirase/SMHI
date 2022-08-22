@@ -10,8 +10,13 @@ namespace BuildVerification
 {
 	class Temperature
 	{
-		DownloadRequest DownloadRequest { get; set; }
+		Dataset Dataset { get; set; }
 
+		public Temperature()
+
+        {
+			Dataset = new Dataset();
+        }
 		/// <summary>
 		/// Fetches the average temperture throughout a station or stationset
 		/// </summary>
@@ -23,24 +28,22 @@ namespace BuildVerification
 		{
 			var url = "https://opendata-download-metobs.smhi.se/api/version/" + version + "/parameter/1/" + stationset + "/" + stationId + "/period/" + timeperiod + "/data.xml";
 
-			DownloadRequest = new DownloadRequest();
+			try
+            {
+				Dataset.GetData(url, true);
 
-			DownloadRequest.GetData(url);
-
-			if (DownloadRequest.Document == null)
-				throw new Exception("Document is null (url not found?)");
-
-			var nsmgr = new XmlNamespaceManager(DownloadRequest.Document.NameTable);
-			nsmgr.AddNamespace("metObsIntervalData", "https://opendata.smhi.se/xsd/metobs_v1.xsd");
-
-			var values = DownloadRequest.Document.DocumentElement.SelectNodes("//metObsIntervalData:value/metObsIntervalData:value", nsmgr);
+			}
+			catch(Exception e)
+            {
+				throw e;
+            }
 
 			var temperature = 0.0f;
 			try
 			{
-				foreach (XmlNode value in values)
+				foreach (var value in Dataset.Data)
 				{
-					temperature += float.Parse(value.InnerText);
+					temperature += float.Parse(value.Value);
 				}
 			}
 			catch (Exception e)
@@ -49,7 +52,7 @@ namespace BuildVerification
 				throw e;
 			}
 
-			return temperature / values.Count;
+			return temperature / Dataset.Data.Count;
 		}
 
 
@@ -62,28 +65,35 @@ namespace BuildVerification
 				await Work(cancelSource.Token, parameter, period);
 			}).Start();
 
-			Console.WriteLine("Working");
 			Console.ReadKey();
 			cancelSource.Cancel();
-			Console.ReadKey();
 		}
 
 
-		private async Task Work(CancellationToken cancelToken, string parameter = "1", string period = "latest-hour")
+		private async Task Work(CancellationToken cancelToken, string parameter = "1", string period = "latest-hour", int delay = 100)
 		{
 			int i = 0;
+			try
+            {
+				Dataset.GetData("https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/" + parameter + "/station-set/all/period/" + period + "/data.xml", true);
+
+			}
+			catch(Exception e)
+            {
+				Console.WriteLine(e);
+				return;
+            }
+			var stations = Dataset.Document.GetElementsByTagName("station");
+
 			while (true)
 			{
-				DownloadRequest = new DownloadRequest();
-				DownloadRequest.GetData("https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/" + parameter + "/station-set/all/period/" + period +"/data.xml");
-				var stations = DownloadRequest.Document.GetElementsByTagName("station");
-				await Task.Delay(100);
+				await Task.Delay(delay);
 				if (cancelToken.IsCancellationRequested)
 				{
 					Console.WriteLine("Cancelling...");
 					return;
 				}
-				Console.WriteLine(stations[i]["name"]?.InnerText + ": " + (stations[i]["value"] != null ? stations[i]["value"]["value"]?.InnerText : ""));
+				Console.WriteLine(Dataset.Data[i].StationName + ": " + Dataset.Data[i].Value);
 				++i;
 			}
 		}
