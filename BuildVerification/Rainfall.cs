@@ -9,59 +9,50 @@ namespace BuildVerification
 {
     class Rainfall
     {
-        public DownloadRequest DownloadRequest { get; set; }
-
-        /// <summary>
-        /// Parses how much rain has fallen within the last few months for a specific station.
-        /// </summary>
-        /// <param name="station">Station to parse from</param>
-        /// <param name="version">Version of API</param>
-        /// <param name="period">Period of time to calculate rainfall for</param>
-        public void Parse(string station, string version, string period)
+        public Dataset Dataset { get; set; }
+        public Rainfall(string stationId)
         {
-            DownloadRequest = new DownloadRequest();
-            var nsmgr = new XmlNamespaceManager(DownloadRequest.Document.NameTable);
-            nsmgr.AddNamespace("metObsIntervalData", "https://opendata.smhi.se/xsd/metobs_v1.xsd");
-            DownloadRequest.GetData("https://opendata-download-metobs.smhi.se/api/version/" + version + "/parameter/23/station/" + station + "/period/" + period + "/data.xml");
-
-            if (DownloadRequest.Document == null) // If document is null, throw exception.
-                throw new Exception("Document is null");
-
-            var values = DownloadRequest.Document.DocumentElement.SelectNodes("//metObsIntervalData:value/metObsIntervalData:value", nsmgr);
-
+            Dataset = new Dataset();
+            Dataset.GetData("https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/23/station/" + stationId + "/period/latest-months/data.xml");
+        }
+        public double GetTotalRain()
+        {
             var totalRain = 0.0f;
-            foreach (XmlNode val in values)
+            try
             {
-                totalRain += float.Parse(val.InnerText);
+                foreach (var val in Dataset.Data)
+                {
+                    totalRain += float.Parse(val.Value);
+                }
+                return totalRain;
             }
-
-            Console.WriteLine(GetPeriod() + " the total rainfall in " + GetName() + " was " + totalRain + " millimeters");
+            catch(Exception e)
+            {
+                totalRain = 0;
+                throw e;
+            }
+            
         }
 
         /// <summary>
         /// Gets the period of time for rainfall.
         /// </summary>
-        /// <returns>Formatted string that contains rainfall</returns>
-        private string GetPeriod()
+        /// <returns>Formatted string that contains period of rainfall</returns>
+        public string[] GetPeriod()
         {
-            XmlNodeList period = DownloadRequest.Document.GetElementsByTagName("period");
-            string[] timeArray = new string[2];
-            timeArray[0] = period[0]["from"]?.InnerText;
-            timeArray[1] = period[0]["to"]?.InnerText;
-            timeArray[0] = StringExtension.Truncate(timeArray[0], 10);
-            timeArray[1] = StringExtension.Truncate(timeArray[1], 10);
-
-            return "Between " + timeArray[0] + " and " + timeArray[1];
+            string[] fromTo = new string[2];
+            fromTo[0] = StringExtension.Truncate(Dataset.From, 10);
+            fromTo[1] = StringExtension.Truncate(Dataset.To, 10);
+            return fromTo;
         }
 
         /// <summary>
-        /// Gets the name of the location
+        /// Gets the name of the current location
         /// </summary>
         /// <returns>Location name</returns>
-        private string GetName()
+        public string GetName()
         {
-            XmlNodeList station = DownloadRequest.Document.GetElementsByTagName("station");
-            return station[0]["name"].InnerText;
+            return Dataset.Data[0].StationName;
         }
     }
 }
