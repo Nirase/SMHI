@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 
 namespace BuildVerification
 {
-    class Temperature
-    {
+	class Temperature
+	{
 		DownloadRequest DownloadRequest { get; set; }
 
 		/// <summary>
@@ -19,7 +20,7 @@ namespace BuildVerification
 		/// <param name="stationId">Id of station</param>
 		/// <param name="timeperiod">Timeperiod to fetch within</param>
 		public double GetAverageTemperature(string version = "1.0", string stationset = "station-set", string stationId = "all", string timeperiod = "latest-hour")
-        {
+		{
 			var url = "https://opendata-download-metobs.smhi.se/api/version/" + version + "/parameter/1/" + stationset + "/" + stationId + "/period/" + timeperiod + "/data.xml";
 
 			DownloadRequest = new DownloadRequest();
@@ -50,48 +51,41 @@ namespace BuildVerification
 
 			return temperature / values.Count;
 		}
+
+
+		CancellationTokenSource cancelSource = new CancellationTokenSource();
+
+		public void Run(string parameter = "1", string period = "latest-hour")
+		{
+			new Thread(async () =>
+			{
+				await Work(cancelSource.Token, parameter, period);
+			}).Start();
+
+			Console.WriteLine("Working");
+			Console.ReadKey();
+			cancelSource.Cancel();
+			Console.ReadKey();
+		}
+
+
+		private async Task Work(CancellationToken cancelToken, string parameter = "1", string period = "latest-hour")
+		{
+			int i = 0;
+			while (true)
+			{
+				DownloadRequest = new DownloadRequest();
+				DownloadRequest.GetData("https://opendata-download-metobs.smhi.se/api/version/1.0/parameter/" + parameter + "/station-set/all/period/" + period +"/data.xml");
+				var stations = DownloadRequest.Document.GetElementsByTagName("station");
+				await Task.Delay(100);
+				if (cancelToken.IsCancellationRequested)
+				{
+					Console.WriteLine("Cancelling...");
+					return;
+				}
+				Console.WriteLine(stations[i]["name"]?.InnerText + ": " + (stations[i]["value"] != null ? stations[i]["value"]["value"]?.InnerText : ""));
+				++i;
+			}
+		}
 	}
 }
-
-/*
- 
- /// <summary>
-		/// Gets the average air temperature.
-		/// </summary>
-		/// <param name="version">Which version of the api to use</param>
-		/// <param name="stationset">Specification if data is from a station or station-set</param>
-		/// <param name="stationId">Which stationID to get data from</param>
-		/// <param name="timeperiod">Time period to return values from</param>
-		/// <returns>Average temperature</returns>
-		private static async Task<double> GetTemperature(string version = "1.0", string stationset = "station-set", string stationId = "all", string timeperiod = "latest-hour")
-		{
-			var url = "https://opendata-download-metobs.smhi.se/api/version/" + version + "/parameter/1/" + stationset + "/" + stationId + "/period/" + timeperiod + "/data.json";
-			try
-			{
-				using (var httpClient = new HttpClient())
-				{
-					var json = await httpClient.GetStringAsync(url);
-					var temp = JsonSerializer.Deserialize<Data>(json);
-					var validStations = 0;
-					var totalTemperature = 0.0f;
-					foreach (var station in temp.station)
-					{
-						if (station.value == null)
-							continue;
-
-						validStations++;
-						totalTemperature += float.Parse(station.value[0].value);
-					}
-
-					var averageTemp = totalTemperature / validStations;
-					return averageTemp;
-
-				}
-
-			}
-			catch (HttpRequestException e)
-			{
-				Console.WriteLine(e);
-				return 0;
-			}
-		}*/

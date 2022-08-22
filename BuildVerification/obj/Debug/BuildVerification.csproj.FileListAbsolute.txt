@@ -23,3 +23,4 @@ C:\Users\Me\Desktop\SMHI\BuildVerification\bin\Debug\System.ValueTuple.xml
 C:\Users\Me\Desktop\SMHI\BuildVerification\obj\Debug\BuildVerification.csproj.CopyComplete
 C:\Users\Me\Desktop\SMHI\BuildVerification\obj\Debug\BuildVerification.exe
 C:\Users\Me\Desktop\SMHI\BuildVerification\obj\Debug\BuildVerification.pdb
+C:\Users\Me\Desktop\SMHI\BuildVerification\obj\Debug\BuildVerification.csprojAssemblyReference.cache
