@@ -1,38 +1,42 @@
 ﻿using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Text.Json;
+using System.Collections.Generic;
+using System.Xml;
 
 namespace BuildVerification
 {
 	internal class Program
 	{
-		public static void Main(string[] args)
+		static bool running = true;
+		public static async Task Main(string[] args)
 		{
-			ConnectAsync().Wait();
-
-			Console.WriteLine();
-			Console.WriteLine("Press any key to continue...");
-			Console.ReadKey();
-		}
-
-		private static async Task ConnectAsync()
-		{
-			try
-			{
-				using (var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) })
-				using (HttpResponseMessage response =
-					await httpClient.GetAsync(new Uri("https://opendata.smhi.se/")))
-				{
-					Console.WriteLine(
-						response.IsSuccessStatusCode
-							? "Verification successful"
-							: $"Verification failure: {response.ReasonPhrase}");
-				}
-			}
-			catch (HttpRequestException e)
-			{
-				Console.WriteLine(e);
-			}
+			while(running)
+            {
+				Console.WriteLine("Please select an option:\n" +
+					"2. Calculate total rainfall in Lund\n" + 
+					"4. Quit");
+				
+				switch(Console.ReadLine())
+                {
+					case "2":
+                        try
+                        {
+							Rainfall rainfall = new Rainfall();
+							rainfall.Parse("52430", "1.0", "latest-months");
+						}
+						catch(Exception e)
+                        {
+							Console.WriteLine(e);
+							continue;
+                        }
+						break;
+					case "4":
+						running = false;
+						break;
+                }
+            }
 		}
 	}
 }
