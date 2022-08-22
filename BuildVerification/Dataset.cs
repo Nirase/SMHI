@@ -20,6 +20,12 @@ namespace BuildVerification
         public string From { get; set; }
         public string To { get; set; }
 
+        /// <summary>
+        /// Loads a file from a url.
+        /// </summary>
+        /// <param name="url">URL to load from</param>
+        /// <param name="forceReload">Forces the instance to reload the file</param>
+        /// <returns>The loaded XML document</returns>
         internal XmlDocument GetData(string url, bool forceReload = false)
         {
             bool stationSet = url.Contains("station-set");
@@ -37,6 +43,10 @@ namespace BuildVerification
             From = Document.DocumentElement.SelectSingleNode("//metObsIntervalData:period/metObsIntervalData:from", nsmgr).InnerText;
             To = Document.DocumentElement.SelectSingleNode("//metObsIntervalData:period/metObsIntervalData:to", nsmgr).InnerText;
 
+            // Checks if we're loading a station-set or not.
+            // If we are, we need to first enter the station, then loop through all the values
+            // If not, we just need to loop through the values
+            // this is to handle datasets that have multiple values, such as a period like "latest-months" in both situations where we're fetching from all stations and from individual stations.
             if(stationSet)
             {
                 var stations = Document.DocumentElement.GetElementsByTagName("station");
